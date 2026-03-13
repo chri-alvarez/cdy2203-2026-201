@@ -1,0 +1,44 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Lista de Pacientes</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<div class="page-container">
+    <h1>Pacientes registrados</h1>
+    <div class="actions">
+        <a class="btn btn-primary" th:href="@{/patients/new}">Registrar paciente</a>
+        <a class="btn btn-secondary" th:href="@{/home}">Volver a inicio</a>
+    </div>
+    <div class="table-wrapper">
+        <table class="patients-table">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Especie</th>
+        <th>Raza</th>
+        <th>Edad</th>
+        <th>Dueño</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="patient : ${patients}">
+        <td th:text="${patient.id}"></td>
+        <td th:text="${patient.name}"></td>
+        <td th:text="${patient.species}"></td>
+        <td th:text="${patient.breed}"></td>
+        <td th:text="${patient.age}"></td>
+        <td th:text="${patient.owner}"></td>
+    </tr>
+    <tr th:if="${patients.isEmpty()}">
+        <td colspan="6">No hay pacientes registrados.</td>
+    </tr>
+    </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

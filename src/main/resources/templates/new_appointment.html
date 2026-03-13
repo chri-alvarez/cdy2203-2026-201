@@ -1,0 +1,42 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Agendar Cita</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<div class="page-container">
+    <h1>Agendar nueva cita</h1>
+    <form class="patient-form" action="#" th:action="@{/appointments}" th:object="${appointment}" method="post">
+        <div>
+            <label>Paciente:</label>
+            <select th:field="*{patientId}" required>
+                <option value="" disabled selected>Selecciona un paciente</option>
+                <option th:each="patient : ${patients}" th:value="${patient.id}" th:text="${patient.name}"></option>
+            </select>
+        </div>
+        <div>
+            <label>Fecha:</label>
+            <input type="date" th:field="*{date}" required />
+        </div>
+        <div>
+            <label>Hora:</label>
+            <input type="time" th:field="*{time}" required />
+        </div>
+        <div>
+            <label>Motivo:</label>
+            <input type="text" th:field="*{reason}" required />
+        </div>
+        <div>
+            <label>Veterinario:</label>
+            <input type="text" th:field="*{veterinarian}" required />
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit">Guardar</button>
+            <a class="btn btn-secondary" th:href="@{/appointments}">Cancelar</a>
+        </div>
+    </form>
+</div>
+</body>
+</html>

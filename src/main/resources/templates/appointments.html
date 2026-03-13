@@ -1,0 +1,44 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Lista de Citas</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+<body>
+<div class="page-container">
+    <h1>Citas agendadas</h1>
+    <div class="actions">
+        <a class="btn btn-primary" th:href="@{/appointments/new}">Agendar cita</a>
+        <a class="btn btn-secondary" th:href="@{/home}">Volver a inicio</a>
+    </div>
+    <div class="table-wrapper">
+        <table class="patients-table">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Paciente</th>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Motivo</th>
+                <th>Veterinario</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="appointment : ${appointments}">
+                <td th:text="${appointment.id}"></td>
+                <td th:text="${patientNames[appointment.patientId]}"></td>
+                <td th:text="${appointment.date}"></td>
+                <td th:text="${appointment.time}"></td>
+                <td th:text="${appointment.reason}"></td>
+                <td th:text="${appointment.veterinarian}"></td>
+            </tr>
+            <tr th:if="${appointments.isEmpty()}">
+                <td colspan="6">No hay citas agendadas.</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

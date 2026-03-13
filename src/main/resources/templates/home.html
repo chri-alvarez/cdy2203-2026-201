@@ -4,15 +4,24 @@
 <title>Getting Started: Serving Web Content</title>  
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /> 
 <link rel="stylesheet" type="text/css" href="/style.css">
-</head> 
-<body> 
-<h1 th:text="|Bienvenido a ${name}!|"></h1>
+</head>
+<body>
+<div class="page-container home-page">
+    <header class="home-header">
+        <h1 th:text="|Bienvenido a ${name}!|"></h1>
+        <p>Gestiona pacientes de tu veterinaria de forma rápida y segura.</p>
+    </header>
 
-<div sec:authorize="isAuthenticated()">
-    <h1 th:inline="text">Hola <span th:remove="tag" sec:authentication="name"></span>!</h1>
-    <h2>Seguridad implementada con Spring Security</h2>
+    <section class="home-actions">
+        <a class="btn btn-primary" th:href="@{/login}">Iniciar sesión</a>
+        <a class="btn btn-secondary" th:href="@{/patients}">Ver pacientes</a>
+        <a class="btn btn-secondary" th:href="@{/appointments}">Ver citas</a>
+    </section>
+
+    <section sec:authorize="isAuthenticated()" class="welcome-auth">
+        <h2 th:inline="text">Hola <span th:remove="tag" sec:authentication="name"></span>!</h2>
+        <p>Seguridad implementada con Spring Security</p>
+    </section>
 </div>
-  
-
-</body> 
+</body>
 </html> 
