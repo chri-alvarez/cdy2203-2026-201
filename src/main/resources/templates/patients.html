@@ -14,31 +14,67 @@
     </div>
     <div class="table-wrapper">
         <table class="patients-table">
-    <thead>
-    <tr>
-        <th>ID</th>
-        <th>Nombre</th>
-        <th>Especie</th>
-        <th>Raza</th>
-        <th>Edad</th>
-        <th>Dueño</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="patient : ${patients}">
-        <td th:text="${patient.id}"></td>
-        <td th:text="${patient.name}"></td>
-        <td th:text="${patient.species}"></td>
-        <td th:text="${patient.breed}"></td>
-        <td th:text="${patient.age}"></td>
-        <td th:text="${patient.owner}"></td>
-    </tr>
-    <tr th:if="${patients.isEmpty()}">
-        <td colspan="6">No hay pacientes registrados.</td>
-    </tr>
-    </tbody>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Especie</th>
+                <th>Raza</th>
+                <th>Edad</th>
+                <th>Dueño</th>
+            </tr>
+            </thead>
+            <tbody id="patientsTableBody">
+            <tr id="emptyRow"><td colspan="6">Cargando datos...</td></tr>
+            </tbody>
         </table>
     </div>
 </div>
+<script>
+    async function loadPatients() {
+        console.log('-> Frontend: loadPatients called');
+        const token = localStorage.getItem('jwtToken');
+        if (!token) {
+            console.warn('No JWT token found, redirecting to login');
+            window.location.href = '/login';
+            return;
+        }
+
+        try {
+            console.log('-> Frontend: GET /api/patients');
+            const response = await fetch('/api/patients', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            console.log('<- Frontend: GET /api/patients status=' + response.status);
+
+            if (response.status === 401 || response.status === 403) {
+                localStorage.removeItem('jwtToken');
+                window.location.href = '/login';
+                return;
+            }
+
+            const patients = await response.json();
+            console.log('<- Frontend: GET /api/patients body=', patients);
+            const tbody = document.getElementById('patientsTableBody');
+            tbody.innerHTML = '';
+
+            if (!patients.length) {
+                tbody.innerHTML = '<tr><td colspan="6">No hay pacientes registrados.</td></tr>';
+                return;
+            }
+
+            patients.forEach(patient => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${patient.id}</td><td>${patient.name}</td><td>${patient.species}</td><td>${patient.breed}</td><td>${patient.age}</td><td>${patient.owner}</td>`;
+                tbody.appendChild(row);
+            });
+        } catch (error) {
+            console.error('Frontend: GET /api/patients error=', error.message, error.stack);
+            document.getElementById('patientsTableBody').innerHTML = '<tr><td colspan="6">Error cargando pacientes.</td></tr>';
+        }
+    }
+
+    loadPatients();
+</script>
 </body>
 </html>

@@ -11,13 +11,12 @@ public class HomeController {
     @GetMapping("/home")
     public String home(@RequestParam(name="name", required=false, defaultValue="Seguridad y Calidad en el Desarrollo") String name, Model model) { 
         model.addAttribute("name", name); 
-        return "Home"; 
+        return "home"; 
         } 
 
     @GetMapping("/")
     public String root(@RequestParam(name="name", required=false, defaultValue="Seguridad y Calidad en el Desarrollo") String name, Model model) { 
         model.addAttribute("name", name); 
-        return "Home"; 
+        return "home"; 
         } 
 }
-

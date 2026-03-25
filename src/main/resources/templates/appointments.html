@@ -24,21 +24,57 @@
                 <th>Veterinario</th>
             </tr>
             </thead>
-            <tbody>
-            <tr th:each="appointment : ${appointments}">
-                <td th:text="${appointment.id}"></td>
-                <td th:text="${patientNames[appointment.patientId]}"></td>
-                <td th:text="${appointment.date}"></td>
-                <td th:text="${appointment.time}"></td>
-                <td th:text="${appointment.reason}"></td>
-                <td th:text="${appointment.veterinarian}"></td>
-            </tr>
-            <tr th:if="${appointments.isEmpty()}">
-                <td colspan="6">No hay citas agendadas.</td>
-            </tr>
+            <tbody id="appointmentsTableBody">
+            <tr><td colspan="6">Cargando datos...</td></tr>
             </tbody>
         </table>
     </div>
 </div>
+<script>
+    async function loadAppointments() {
+        const token = localStorage.getItem('jwtToken');
+        if (!token) {
+            window.location.href = '/login';
+            return;
+        }
+
+        console.log('-> Frontend: loadAppointments called with token=', token); // Debug log
+
+        try {
+            console.log('-> Frontend: GET /api/appointments');
+            const response = await fetch('/api/appointments', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            console.log('<- Frontend: GET /api/appointments status=' + response.status);
+
+            if (response.status === 401 || response.status === 403) {
+                localStorage.removeItem('jwtToken');
+                window.location.href = '/login';
+                return;
+            }
+
+            const appointments = await response.json();
+            console.log('<- Frontend: GET /api/appointments body=', appointments);
+            const tbody = document.getElementById('appointmentsTableBody');
+            tbody.innerHTML = '';
+
+            if (!appointments.length) {
+                tbody.innerHTML = '<tr><td colspan="6">No hay citas agendadas.</td></tr>';
+                return;
+            }
+
+            appointments.forEach(appointment => {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${appointment.id}</td><td>${appointment.patientId}</td><td>${appointment.date}</td><td>${appointment.time}</td><td>${appointment.reason}</td><td>${appointment.veterinarian}</td>`;
+                tbody.appendChild(row);
+            });
+        } catch (error) {
+            console.error('Frontend: GET /api/appointments error=', error.message, error.stack);
+            document.getElementById('appointmentsTableBody').innerHTML = '<tr><td colspan="6">Error cargando citas.</td></tr>';
+        }
+    }
+
+    loadAppointments();
+</script>
 </body>
 </html>
