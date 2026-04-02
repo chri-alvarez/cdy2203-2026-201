@@ -252,4 +252,90 @@ public List<Map<String, Object>> getAppointments(String jwtToken) {
             throw ex;
         }
     }
+
+    public List<Map<String, Object>> getInvoices(String jwtToken) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(jwtToken);
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        log.debug("-> BackendService.getInvoices Authorization=Bearer {}", jwtToken);
+        try {
+            ResponseEntity<Map[]> response = restTemplate.exchange(
+                    backendBaseUrl + "/invoices",
+                    HttpMethod.GET,
+                    entity,
+                    Map[].class
+            );
+            log.debug("<- BackendService.getInvoices status={} body={}", response.getStatusCode(), Arrays.toString(response.getBody()));
+            if (response.getBody() == null) {
+                return Collections.emptyList();
+            }
+            return Arrays.asList(response.getBody());
+        } catch (HttpStatusCodeException ex) {
+            log.error("Backend getInvoices failed status={} body={}", ex.getStatusCode(), ex.getResponseBodyAsString());
+            throw ex;
+        }
+    }
+
+    public Map<String, Object> getInvoiceById(String jwtToken, Long id) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(jwtToken);
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        log.debug("-> BackendService.getInvoiceById Authorization=Bearer {} id={}", jwtToken, id);
+        try {
+            ResponseEntity<Map> response = restTemplate.exchange(
+                    backendBaseUrl + "/invoices/" + id,
+                    HttpMethod.GET,
+                    entity,
+                    Map.class
+            );
+            log.debug("<- BackendService.getInvoiceById status={} body={}", response.getStatusCode(), response.getBody());
+            return response.getBody();
+        } catch (HttpStatusCodeException ex) {
+            log.error("Backend getInvoiceById failed status={} body={}", ex.getStatusCode(), ex.getResponseBodyAsString());
+            throw ex;
+        }
+    }
+
+    public Map<String, Object> getInvoiceByAppointmentId(String jwtToken, Long appointmentId) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(jwtToken);
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        log.debug("-> BackendService.getInvoiceByAppointmentId Authorization=Bearer {} appointmentId={}", jwtToken, appointmentId);
+        try {
+            ResponseEntity<Map> response = restTemplate.exchange(
+                    backendBaseUrl + "/invoices/appointment/" + appointmentId,
+                    HttpMethod.GET,
+                    entity,
+                    Map.class
+            );
+            log.debug("<- BackendService.getInvoiceByAppointmentId status={} body={}", response.getStatusCode(), response.getBody());
+            return response.getBody();
+        } catch (HttpStatusCodeException ex) {
+            log.error("Backend getInvoiceByAppointmentId failed status={} body={}", ex.getStatusCode(), ex.getResponseBodyAsString());
+            throw ex;
+        }
+    }
+
+    public Map<String, Object> createInvoice(String jwtToken, Long appointmentId, Map<String, Object> request) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(jwtToken);
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(request, headers);
+
+        log.debug("-> BackendService.createInvoice Authorization=Bearer {} appointmentId={} payload={}", jwtToken, appointmentId, request);
+        try {
+            Map response = restTemplate.postForObject(
+                    backendBaseUrl + "/invoices/appointments/" + appointmentId,
+                    entity,
+                    Map.class
+            );
+            log.debug("<- BackendService.createInvoice response={}", response);
+            return response;
+        } catch (HttpStatusCodeException ex) {
+            log.error("Backend createInvoice failed status={} body={}", ex.getStatusCode(), ex.getResponseBodyAsString());
+            throw ex;
+        }
+    }
 }
