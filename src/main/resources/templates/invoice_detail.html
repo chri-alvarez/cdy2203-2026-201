@@ -74,6 +74,7 @@
     </section>
 </div>
 
+<script src="/auth.js"></script>
 <script>
     function formatCurrency(value) {
         const amount = Number(value || 0);
@@ -85,16 +86,8 @@
         return segments[segments.length - 1];
     }
 
-    async function fetchJson(url, token) {
-        const response = await fetch(url, {
-            headers: { 'Authorization': 'Bearer ' + token }
-        });
-
-        if (response.status === 401 || response.status === 403) {
-            localStorage.removeItem('jwtToken');
-            window.location.href = '/login';
-            throw new Error('Sesión expirada');
-        }
+    async function fetchJson(url) {
+        const response = await apiFetch(url);
 
         if (!response.ok) {
             const message = await response.text();
@@ -109,18 +102,12 @@
     }
 
     async function loadInvoiceDetail() {
-        const token = localStorage.getItem('jwtToken');
-        if (!token) {
-            window.location.href = '/login';
-            return;
-        }
-
         const invoiceId = getInvoiceIdFromPath();
         try {
-            const invoice = await fetchJson(`/api/invoices/${invoiceId}`, token);
+            const invoice = await fetchJson(`/api/invoices/${invoiceId}`);
             const [appointments, patients] = await Promise.all([
-                fetchJson('/api/appointments', token),
-                fetchJson('/api/patients', token)
+                fetchJson('/api/appointments'),
+                fetchJson('/api/patients')
             ]);
 
             const appointment = appointments.find(item => String(item.id) === String(invoice.appointmentId));

@@ -75,12 +75,9 @@
     </div>
 </div>
 
+<script src="/auth.js"></script>
 <script>
     let currentPets = [];
-
-    function getToken() {
-        return localStorage.getItem('jwtToken');
-    }
 
     function escapeHtml(value) {
         return String(value ?? '')
@@ -209,12 +206,6 @@
     }
 
     async function markAsAdopted(id) {
-        const token = getToken();
-        if (!token) {
-            window.location.href = '/login';
-            return;
-        }
-
         const selectedPet = getPetById(id);
         if (!selectedPet) {
             showMessage('No se encontro la mascota seleccionada.', true);
@@ -224,20 +215,13 @@
         const payload = { ...selectedPet, status: 'adopted' };
 
         try {
-            const response = await fetch('/api/pets/' + id, {
+            const response = await apiFetch('/api/pets/' + id, {
                 method: 'PUT',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(payload)
             });
-
-            if (response.status === 401 || response.status === 403) {
-                localStorage.removeItem('jwtToken');
-                window.location.href = '/login';
-                return;
-            }
 
             if (!response.ok) {
                 const errText = await response.text();
@@ -252,12 +236,6 @@
     }
 
     async function markAsUnavailable(id) {
-        const token = getToken();
-        if (!token) {
-            window.location.href = '/login';
-            return;
-        }
-
         const selectedPet = getPetById(id);
         if (!selectedPet) {
             showMessage('No se encontro la mascota seleccionada.', true);
@@ -267,20 +245,13 @@
         const payload = { ...selectedPet, status: 'unavailable' };
 
         try {
-            const response = await fetch('/api/pets/' + id, {
+            const response = await apiFetch('/api/pets/' + id, {
                 method: 'PUT',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(payload)
             });
-
-            if (response.status === 401 || response.status === 403) {
-                localStorage.removeItem('jwtToken');
-                window.location.href = '/login';
-                return;
-            }
 
             if (!response.ok) {
                 const errText = await response.text();
@@ -295,29 +266,14 @@
     }
 
     async function deletePet(id) {
-        const token = getToken();
-        if (!token) {
-            window.location.href = '/login';
-            return;
-        }
-
         if (!window.confirm('Deseas eliminar esta mascota?')) {
             return;
         }
 
         try {
-            const response = await fetch('/api/pets/' + id, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': 'Bearer ' + token
-                }
+            const response = await apiFetch('/api/pets/' + id, {
+                method: 'DELETE'
             });
-
-            if (response.status === 401 || response.status === 403) {
-                localStorage.removeItem('jwtToken');
-                window.location.href = '/login';
-                return;
-            }
 
             if (!response.ok) {
                 const errText = await response.text();

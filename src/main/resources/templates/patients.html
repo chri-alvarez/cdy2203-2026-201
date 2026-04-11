@@ -30,28 +30,14 @@
         </table>
     </div>
 </div>
+<script src="/auth.js"></script>
 <script>
     async function loadPatients() {
         console.log('-> Frontend: loadPatients called');
-        const token = localStorage.getItem('jwtToken');
-        if (!token) {
-            console.warn('No JWT token found, redirecting to login');
-            window.location.href = '/login';
-            return;
-        }
-
         try {
             console.log('-> Frontend: GET /api/patients');
-            const response = await fetch('/api/patients', {
-                headers: { 'Authorization': 'Bearer ' + token }
-            });
+            const response = await apiFetch('/api/patients');
             console.log('<- Frontend: GET /api/patients status=' + response.status);
-
-            if (response.status === 401 || response.status === 403) {
-                localStorage.removeItem('jwtToken');
-                window.location.href = '/login';
-                return;
-            }
 
             const patients = await response.json();
             console.log('<- Frontend: GET /api/patients body=', patients);

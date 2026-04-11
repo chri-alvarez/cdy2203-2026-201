@@ -1,5 +1,6 @@
 package com.duoc.seguridadcalidad;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -7,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -20,33 +20,35 @@ public class PatientRestController {
 
     private static final Logger log = LoggerFactory.getLogger(PatientRestController.class);
     private final BackendService backendService;
+    private final JwtCookieService jwtCookieService;
 
-    public PatientRestController(BackendService backendService) {
+    public PatientRestController(BackendService backendService, JwtCookieService jwtCookieService) {
         this.backendService = backendService;
+        this.jwtCookieService = jwtCookieService;
     }
 
     @GetMapping
-    public ResponseEntity<List<Map<String, Object>>> getAll(@RequestHeader(value = "Authorization", required = false) String authorizationHeader) {
-        log.debug("GET /api/patients Authorization={}", authorizationHeader);
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            log.warn("GET /api/patients missing or invalid Authorization header");
+    public ResponseEntity<List<Map<String, Object>>> getAll(HttpServletRequest request) {
+        String token = jwtCookieService.extractToken(request);
+        log.debug("GET /api/patients tokenPresent={}", token != null);
+        if (token == null) {
+            log.warn("GET /api/patients missing authentication token");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        String token = authorizationHeader.substring(7);
         List<Map<String, Object>> patients = backendService.getPatients(token);
         log.debug("GET /api/patients returning {} patients", patients.size());
         return ResponseEntity.ok(patients);
     }
 
     @PostMapping
-    public ResponseEntity<Map<String, Object>> create(@RequestHeader(value = "Authorization", required = false) String authorizationHeader,
+    public ResponseEntity<Map<String, Object>> create(HttpServletRequest request,
                                          @RequestBody Map<String, Object> patient) {
-        log.debug("POST /api/patients Authorization={} payload={}", authorizationHeader, patient);
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            log.warn("POST /api/patients missing or invalid Authorization header");
+        String token = jwtCookieService.extractToken(request);
+        log.debug("POST /api/patients tokenPresent={} payload={}", token != null, patient);
+        if (token == null) {
+            log.warn("POST /api/patients missing authentication token");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        String token = authorizationHeader.substring(7);
         Map<String, Object> saved = backendService.createPatient(token, patient);
         log.debug("POST /api/patients saved={}", saved);
         return ResponseEntity.ok(saved);

@@ -36,11 +36,10 @@
         <div id="errorPatient" style="color: red; margin-top: 1rem;"></div>
     </form>
 </div>
+<script src="/auth.js"></script>
 <script>
     document.getElementById('patientForm').addEventListener('submit', async function(event) {
         event.preventDefault();
-        const token = localStorage.getItem('jwtToken');
-        if (!token) { window.location.href = '/login'; return; }
 
         const body = {
             name: document.getElementById('name').value,
@@ -52,21 +51,14 @@
 
         try {
             console.log('-> Frontend: POST /api/patients body=', body);
-            const response = await fetch('/api/patients', {
+            const response = await apiFetch('/api/patients', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(body)
             });
             console.log('<- Frontend: POST /api/patients status=' + response.status);
-
-            if (response.status === 401 || response.status === 403) {
-                localStorage.removeItem('jwtToken');
-                window.location.href = '/login';
-                return;
-            }
 
             if (!response.ok) {
                 const err = await response.text();

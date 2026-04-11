@@ -32,28 +32,15 @@
         </table>
     </div>
 </div>
+<script src="/auth.js"></script>
 <script>
     async function loadAppointments() {
-        const token = localStorage.getItem('jwtToken');
-        if (!token) {
-            window.location.href = '/login';
-            return;
-        }
-
-        console.log('-> Frontend: loadAppointments called with token=', token); // Debug log
+        console.log('-> Frontend: loadAppointments called');
 
         try {
             console.log('-> Frontend: GET /api/appointments');
-            const response = await fetch('/api/appointments', {
-                headers: { 'Authorization': 'Bearer ' + token }
-            });
+            const response = await apiFetch('/api/appointments');
             console.log('<- Frontend: GET /api/appointments status=' + response.status);
-
-            if (response.status === 401 || response.status === 403) {
-                localStorage.removeItem('jwtToken');
-                window.location.href = '/login';
-                return;
-            }
 
             const appointments = await response.json();
             console.log('<- Frontend: GET /api/appointments body=', appointments);

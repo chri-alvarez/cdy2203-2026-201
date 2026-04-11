@@ -24,25 +24,21 @@
         </div>
     </div>
 
+    <script src="/auth.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const token = localStorage.getItem('jwtToken');
-
-            if (token) {
-                // Usuario Logeado
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (await hasAuthSession()) {
                 document.getElementById('btnPatients').style.display = 'inline-block';
                 document.getElementById('btnAppointments').style.display = 'inline-block';
                 document.getElementById('btnPets').style.display = 'inline-block';
                 document.getElementById('btnInvoices').style.display = 'inline-block';
                 document.getElementById('btnLogout').style.display = 'inline-block';
             } else {
-                // Usuario No Logeado
                 document.getElementById('btnLogin').style.display = 'inline-block';
             }
 
-            document.getElementById('btnLogout').addEventListener('click', function() {
-                localStorage.removeItem('jwtToken');
-                window.location.reload();
+            document.getElementById('btnLogout').addEventListener('click', async function() {
+                await logout();
             });
         });
     </script>

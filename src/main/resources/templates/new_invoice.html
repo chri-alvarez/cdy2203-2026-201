@@ -70,6 +70,7 @@
         <div id="successInvoice" class="form-success"></div>
     </form>
 </div>
+<script src="/auth.js"></script>
 <script>
     const itemTypes = ['SERVICE', 'MEDICATION', 'ADDITIONAL_CHARGE'];
     const appointmentSelect = document.getElementById('appointmentId');
@@ -93,15 +94,6 @@
         document.getElementById('summaryTime').textContent = appointment?.time || '-';
         document.getElementById('summaryReason').textContent = appointment?.reason || '-';
         document.getElementById('summaryVeterinarian').textContent = appointment?.veterinarian || '-';
-    }
-
-    function getTokenOrRedirect() {
-        const token = localStorage.getItem('jwtToken');
-        if (!token) {
-            window.location.href = '/login';
-            return null;
-        }
-        return token;
     }
 
     function createItemRow(item = {}) {
@@ -167,26 +159,11 @@
     }
 
     async function loadAppointmentsOptions() {
-        const token = getTokenOrRedirect();
-        if (!token) {
-            return;
-        }
-
         try {
             const [appointmentsResponse, patientsResponse] = await Promise.all([
-                fetch('/api/appointments', {
-                    headers: { 'Authorization': 'Bearer ' + token }
-                }),
-                fetch('/api/patients', {
-                    headers: { 'Authorization': 'Bearer ' + token }
-                })
+                apiFetch('/api/appointments'),
+                apiFetch('/api/patients')
             ]);
-
-            if ([appointmentsResponse, patientsResponse].some(response => response.status === 401 || response.status === 403)) {
-                localStorage.removeItem('jwtToken');
-                window.location.href = '/login';
-                return;
-            }
 
             if (!appointmentsResponse.ok || !patientsResponse.ok) {
                 throw new Error('No fue posible cargar las visitas');
@@ -221,10 +198,8 @@
         }
     }
 
-    async function validateNoExistingInvoice(token, appointmentId) {
-        const response = await fetch(`/api/invoices/appointment/${appointmentId}`, {
-            headers: { 'Authorization': 'Bearer ' + token }
-        });
+    async function validateNoExistingInvoice(appointmentId) {
+        const response = await apiFetch(`/api/invoices/appointment/${appointmentId}`);
 
         if (response.status === 200) {
             throw new Error('La visita seleccionada ya tiene una factura emitida.');
@@ -244,11 +219,6 @@
         event.preventDefault();
         errorBox.textContent = '';
         successBox.textContent = '';
-
-        const token = getTokenOrRedirect();
-        if (!token) {
-            return;
-        }
 
         const appointmentId = appointmentSelect.value;
         const items = collectItems();
@@ -277,22 +247,15 @@
         };
 
         try {
-            await validateNoExistingInvoice(token, appointmentId);
+            await validateNoExistingInvoice(appointmentId);
 
-            const response = await fetch(`/api/invoices/appointments/${appointmentId}`, {
+            const response = await apiFetch(`/api/invoices/appointments/${appointmentId}`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(body)
             });
-
-            if (response.status === 401 || response.status === 403) {
-                localStorage.removeItem('jwtToken');
-                window.location.href = '/login';
-                return;
-            }
 
             const payload = await response.json().catch(() => ({}));
             if (!response.ok) {

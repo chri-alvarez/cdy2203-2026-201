@@ -38,24 +38,15 @@
         <div id="errorAppointment" style="color: red; margin-top: 1rem;"></div>
     </form>
 </div>
+<script src="/auth.js"></script>
 <script>
     async function loadPatientsOptions() {
-        const token = localStorage.getItem('jwtToken');
-        if (!token) {
-            window.location.href = '/login';
-            return;
-        }
-
         try {
             console.log('-> Frontend: GET /api/patients (for options)');
-            const response = await fetch('/api/patients', {
-                headers: { 'Authorization': 'Bearer ' + token }
-            });
+            const response = await apiFetch('/api/patients');
             console.log('<- Frontend: GET /api/patients (for options) status=' + response.status);
 
             if (!response.ok) {
-                localStorage.removeItem('jwtToken');
-                window.location.href = '/login';
                 return;
             }
 
@@ -76,8 +67,6 @@
 
     document.getElementById('appointmentForm').addEventListener('submit', async function(event) {
         event.preventDefault();
-        const token = localStorage.getItem('jwtToken');
-        if (!token) { window.location.href = '/login'; return; }
 
         const body = {
             patientId: parseInt(document.getElementById('patientId').value, 10),
@@ -89,21 +78,14 @@
 
         try {
             console.log('-> Frontend: POST /api/appointments body=', body);
-            const response = await fetch('/api/appointments', {
+            const response = await apiFetch('/api/appointments', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(body)
             });
             console.log('<- Frontend: POST /api/appointments status=' + response.status);
-
-            if (response.status === 401 || response.status === 403) {
-                localStorage.removeItem('jwtToken');
-                window.location.href = '/login';
-                return;
-            }
 
             if (!response.ok) {
                 const err = await response.text();

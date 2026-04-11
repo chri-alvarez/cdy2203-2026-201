@@ -32,6 +32,7 @@
         </table>
     </div>
 </div>
+<script src="/auth.js"></script>
 <script>
     function formatCurrency(value) {
         const amount = Number(value || 0);
@@ -54,17 +55,11 @@
         return items.map(item => `${item.description} (${item.quantity} x ${formatCurrency(item.unitPrice)})`).join(' | ');
     }
 
-    async function loadReferenceData(token) {
+    async function loadReferenceData() {
         const [appointmentsResponse, patientsResponse] = await Promise.all([
-            fetch('/api/appointments', { headers: { 'Authorization': 'Bearer ' + token } }),
-            fetch('/api/patients', { headers: { 'Authorization': 'Bearer ' + token } })
+            apiFetch('/api/appointments'),
+            apiFetch('/api/patients')
         ]);
-
-        if ([appointmentsResponse, patientsResponse].some(response => response.status === 401 || response.status === 403)) {
-            localStorage.removeItem('jwtToken');
-            window.location.href = '/login';
-            throw new Error('Sesión expirada');
-        }
 
         if (!appointmentsResponse.ok || !patientsResponse.ok) {
             throw new Error('No fue posible cargar la información complementaria de citas y pacientes');
@@ -90,29 +85,15 @@
     }
 
     async function loadInvoices() {
-        const token = localStorage.getItem('jwtToken');
-        if (!token) {
-            window.location.href = '/login';
-            return;
-        }
-
         try {
-            const response = await fetch('/api/invoices', {
-                headers: { 'Authorization': 'Bearer ' + token }
-            });
-
-            if (response.status === 401 || response.status === 403) {
-                localStorage.removeItem('jwtToken');
-                window.location.href = '/login';
-                return;
-            }
+            const response = await apiFetch('/api/invoices');
 
             if (!response.ok) {
                 throw new Error('No fue posible obtener las facturas');
             }
 
             const invoices = await response.json();
-            const { appointmentsById, patientsById } = await loadReferenceData(token);
+            const { appointmentsById, patientsById } = await loadReferenceData();
             const tbody = document.getElementById('invoicesTableBody');
             tbody.innerHTML = '';
 

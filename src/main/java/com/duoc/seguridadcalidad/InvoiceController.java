@@ -1,5 +1,6 @@
 package com.duoc.seguridadcalidad;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -8,7 +9,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpStatusCodeException;
@@ -24,16 +24,16 @@ public class InvoiceController {
     private static final Logger log = LoggerFactory.getLogger(InvoiceController.class);
 
     private final BackendService backendService;
+    private final JwtCookieService jwtCookieService;
 
-    public InvoiceController(BackendService backendService) {
+    public InvoiceController(BackendService backendService, JwtCookieService jwtCookieService) {
         this.backendService = backendService;
+        this.jwtCookieService = jwtCookieService;
     }
 
     @GetMapping
-    public ResponseEntity<?> getAll(
-            @RequestHeader(value = "Authorization", required = false) String authorizationHeader
-    ) {
-        String token = extractBearerToken(authorizationHeader);
+    public ResponseEntity<?> getAll(HttpServletRequest request) {
+        String token = jwtCookieService.extractToken(request);
         if (token == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
@@ -52,9 +52,9 @@ public class InvoiceController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getById(
             @PathVariable Long id,
-            @RequestHeader(value = "Authorization", required = false) String authorizationHeader
+            HttpServletRequest request
     ) {
-        String token = extractBearerToken(authorizationHeader);
+        String token = jwtCookieService.extractToken(request);
         if (token == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
@@ -73,9 +73,9 @@ public class InvoiceController {
     @GetMapping("/appointment/{appointmentId}")
     public ResponseEntity<?> getByAppointmentId(
             @PathVariable Long appointmentId,
-            @RequestHeader(value = "Authorization", required = false) String authorizationHeader
+            HttpServletRequest request
     ) {
-        String token = extractBearerToken(authorizationHeader);
+        String token = jwtCookieService.extractToken(request);
         if (token == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
@@ -94,17 +94,17 @@ public class InvoiceController {
     @PostMapping("/appointments/{appointmentId}")
     public ResponseEntity<?> create(
             @PathVariable Long appointmentId,
-            @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
-            @RequestBody Map<String, Object> request
+            HttpServletRequest request,
+            @RequestBody Map<String, Object> payload
     ) {
-        String token = extractBearerToken(authorizationHeader);
+        String token = jwtCookieService.extractToken(request);
         if (token == null) {
-            log.warn("POST /invoices/appointments/{} missing or invalid Authorization header", appointmentId);
+            log.warn("POST /invoices/appointments/{} missing authentication token", appointmentId);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         try {
-            Map<String, Object> invoice = backendService.createInvoice(token, appointmentId, request);
+            Map<String, Object> invoice = backendService.createInvoice(token, appointmentId, payload);
             return ResponseEntity.status(HttpStatus.CREATED).body(invoice);
         } catch (HttpStatusCodeException ex) {
             return ResponseEntity.status(ex.getStatusCode()).body(ex.getResponseBodyAsString());
@@ -112,12 +112,5 @@ public class InvoiceController {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                     .body(Map.of("message", "El backend de facturación no está disponible"));
         }
-    }
-
-    private String extractBearerToken(String authorizationHeader) {
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            return null;
-        }
-        return authorizationHeader.substring(7);
     }
 }

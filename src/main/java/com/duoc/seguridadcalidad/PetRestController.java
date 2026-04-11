@@ -1,5 +1,6 @@
 package com.duoc.seguridadcalidad;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -10,7 +11,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,9 +24,11 @@ public class PetRestController {
 
     private static final Logger log = LoggerFactory.getLogger(PetRestController.class);
     private final BackendService backendService;
+    private final JwtCookieService jwtCookieService;
 
-    public PetRestController(BackendService backendService) {
+    public PetRestController(BackendService backendService, JwtCookieService jwtCookieService) {
         this.backendService = backendService;
+        this.jwtCookieService = jwtCookieService;
     }
 
     @GetMapping
@@ -58,16 +60,16 @@ public class PetRestController {
 
     @PostMapping
     public ResponseEntity<Map<String, Object>> create(
-            @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
+            HttpServletRequest request,
             @RequestBody Map<String, Object> pet
     ) {
-        log.debug("POST /api/pets Authorization={} payload={}", authorizationHeader, pet);
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            log.warn("POST /api/pets missing or invalid Authorization header");
+        String token = jwtCookieService.extractToken(request);
+        log.debug("POST /api/pets tokenPresent={} payload={}", token != null, pet);
+        if (token == null) {
+            log.warn("POST /api/pets missing authentication token");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        String token = authorizationHeader.substring(7);
         Map<String, Object> saved = backendService.createPet(token, pet);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
@@ -75,16 +77,16 @@ public class PetRestController {
     @PutMapping("/{id}")
     public ResponseEntity<Map<String, Object>> update(
             @PathVariable Integer id,
-            @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
+            HttpServletRequest request,
             @RequestBody Map<String, Object> pet
     ) {
-        log.debug("PUT /api/pets/{} Authorization={} payload={}", id, authorizationHeader, pet);
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            log.warn("PUT /api/pets/{} missing or invalid Authorization header", id);
+        String token = jwtCookieService.extractToken(request);
+        log.debug("PUT /api/pets/{} tokenPresent={} payload={}", id, token != null, pet);
+        if (token == null) {
+            log.warn("PUT /api/pets/{} missing authentication token", id);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        String token = authorizationHeader.substring(7);
         Map<String, Object> updated = backendService.updatePet(token, id, pet);
         return ResponseEntity.ok(updated);
     }
@@ -92,15 +94,15 @@ public class PetRestController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, Object>> delete(
             @PathVariable Integer id,
-            @RequestHeader(value = "Authorization", required = false) String authorizationHeader
+            HttpServletRequest request
     ) {
-        log.debug("DELETE /api/pets/{} Authorization={}", id, authorizationHeader);
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            log.warn("DELETE /api/pets/{} missing or invalid Authorization header", id);
+        String token = jwtCookieService.extractToken(request);
+        log.debug("DELETE /api/pets/{} tokenPresent={}", id, token != null);
+        if (token == null) {
+            log.warn("DELETE /api/pets/{} missing authentication token", id);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        String token = authorizationHeader.substring(7);
         Map<String, Object> deleted = backendService.deletePet(token, id);
         return ResponseEntity.ok(deleted);
     }
